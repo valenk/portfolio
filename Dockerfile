@@ -11,10 +11,10 @@ COPY . .
 # vite build only. type checking runs locally / in dev, no need to gate the image on it
 RUN npm exec --workspace web -- vite build
 
-# serve the build with caddy, which also reverse proxies /api to the notes api
-FROM caddy:2-alpine AS web
-COPY Caddyfile /etc/caddy/Caddyfile
-COPY --from=web-build /app/web/dist /srv
+# serve the build with nginx, which also reverse proxies /api to the notes api
+FROM nginx:1.27-alpine AS web
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=web-build /app/web/dist /usr/share/nginx/html
 EXPOSE 80
 
 # build the spring boot api with the gradle wrapper

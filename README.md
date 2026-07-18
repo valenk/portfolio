@@ -31,7 +31,7 @@ npm run build     # type checks and builds the web app into web/dist
 
 ## deploy
 
-Runs as docker compose on my homelab: caddy serves the static build and reverse
+Runs as docker compose on my homelab: nginx serves the static build and reverse
 proxies /api to the notes api, cloudflared exposes it with no port forwarding.
 
 ```bash
