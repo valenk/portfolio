@@ -13,8 +13,6 @@ const NAV: NavItem[] = [
   { kind: 'page',    to: '/projects',  match: '/projects', label: 'Projects' },
   { kind: 'page',    to: '/homelab',   match: '/homelab',  label: 'HomeLab' },
   { kind: 'page',    to: '/wall',      match: '/wall',     label: 'Wall' },
-  { kind: 'section', id: 'stack',      label: 'Stack' },
-  { kind: 'section', id: 'education',  label: 'Education' },
 ]
 
 const SECTION_IDS = NAV.flatMap(item => (item.kind === 'section' ? [item.id] : []))
