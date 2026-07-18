@@ -13,10 +13,10 @@ export function Home() {
       <hr className="divider" />
       <About />
       <Experience />
+      <Education />
       <Projects />
       <HomeLab />
       <Stack />
-      <Education />
     </>
   )
 }
