@@ -1,24 +1,24 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
 import type { Note } from '@shared'
-import { fetchNotes } from '../lib/notesApi'
+import { fetchAllNotes } from '../lib/notesApi'
+import { boardHeight, scatter } from '../lib/wallLayout'
 import { DrawPad } from '../components/DrawPad'
 import { NoteCard } from '../components/NoteCard'
-
-const PAGE = 60
 
 export function WallPage() {
   const [notes, setNotes] = useState<Note[]>([])
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
-  const [loadingMore, setLoadingMore] = useState(false)
-  const [done, setDone] = useState(false)
+
+  const boardRef = useRef<HTMLDivElement>(null)
+  const [boardWidth, setBoardWidth] = useState(0)
 
   useEffect(() => {
     let alive = true
-    fetchNotes()
+    fetchAllNotes()
       .then((list) => {
         if (!alive) return
         setNotes(list)
-        setDone(list.length < PAGE)
         setStatus('ready')
       })
       .catch(() => {
@@ -29,30 +29,34 @@ export function WallPage() {
     }
   }, [])
 
-  async function loadMore() {
-    if (loadingMore || done || notes.length === 0) return
-    setLoadingMore(true)
-    try {
-      const older = await fetchNotes(notes[notes.length - 1].createdAt)
-      setNotes((prev) => [...prev, ...older])
-      if (older.length < PAGE) setDone(true)
-    } catch {
-      // leave what we have; the load-more button stays available
-    } finally {
-      setLoadingMore(false)
-    }
-  }
+  // track the board width so the scatter can spread across it and reflow on resize
+  useEffect(() => {
+    const el = boardRef.current
+    if (!el) return
+    const measure = () => setBoardWidth(el.clientWidth)
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  const positions = useMemo(
+    () => scatter(notes.map((n) => n.id), boardWidth),
+    [notes, boardWidth],
+  )
+  const height = useMemo(() => boardHeight(positions), [positions])
 
   return (
     <section className="wall">
       <header className="wall-head">
         <h1 className="wall-title">sign the wall</h1>
         <p className="wall-lede muted">
-          draw or scribble a little something and stick it up. it stays here for good.
+          draw or scribble a little something and stick it up. one per visitor,
+          and it stays here for good.
         </p>
       </header>
 
-      <DrawPad onPosted={(note) => setNotes((prev) => [note, ...prev])} />
+      <DrawPad onPosted={(note) => setNotes((prev) => [...prev, note])} />
 
       {status === 'loading' && <p className="muted wall-note">loading the wall...</p>}
       {status === 'error' && <p className="muted wall-note">the wall is napping, try again later.</p>}
@@ -60,21 +64,19 @@ export function WallPage() {
         <p className="muted wall-note">no notes yet. be the first to sign.</p>
       )}
 
-      {notes.length > 0 && (
-        <div className="wall-grid">
-          {notes.map((n) => (
-            <NoteCard key={n.id} note={n} />
-          ))}
-        </div>
-      )}
-
-      {status === 'ready' && !done && notes.length > 0 && (
-        <div className="wall-more">
-          <button className="pad-btn" type="button" onClick={loadMore} disabled={loadingMore}>
-            {loadingMore ? 'loading...' : 'load older notes'}
-          </button>
-        </div>
-      )}
+      <div
+        ref={boardRef}
+        className="wall-board"
+        style={{ height: notes.length ? height : undefined }}
+      >
+        {notes.map((n) => {
+          const p = positions[n.id]
+          const style: CSSProperties | undefined = p
+            ? { left: `${p.x}px`, top: `${p.y}px` }
+            : undefined
+          return <NoteCard key={n.id} note={n} style={style} />
+        })}
+      </div>
     </section>
   )
 }

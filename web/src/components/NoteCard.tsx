@@ -2,7 +2,12 @@ import { useEffect, useRef, type CSSProperties } from 'react'
 import { CANVAS, type Note } from '@shared'
 import { paint } from '../lib/draw'
 
-export function NoteCard({ note }: { note: Note }) {
+type Props = {
+  note: Note
+  style?: CSSProperties
+}
+
+export function NoteCard({ note, style }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -16,10 +21,11 @@ export function NoteCard({ note }: { note: Note }) {
     paint(ctx, note.color, note.strokes)
   }, [note])
 
-  const style = { '--tilt': `${tiltFor(note.id)}deg` } as CSSProperties
+  // board position comes in via style, tilt is the card's own stable angle
+  const merged = { '--tilt': `${tiltFor(note.id)}deg`, ...style } as CSSProperties
 
   return (
-    <figure className="wall-card" style={style}>
+    <figure className="wall-card" style={merged}>
       <canvas
         ref={canvasRef}
         className="wall-canvas"

@@ -1511,20 +1511,23 @@ a:hover { color: var(--link-hover); border-bottom-color: currentColor; }
 
 .wall-note { margin: 24px 0; }
 
-.wall-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 24px;
+/* the board is a relative canvas the post-its are absolutely scattered on. its
+   height comes from js so it always grows to fit every note. */
+.wall-board {
+  position: relative;
+  width: 100%;
   margin-top: 8px;
 }
 
 .wall-card {
+  position: absolute;
+  width: 190px;
   margin: 0;
   transform: rotate(var(--tilt, 0deg));
   transition: transform 0.18s ease;
 }
 
-.wall-card:hover { transform: rotate(0deg) scale(1.03); }
+.wall-card:hover { transform: rotate(0deg) scale(1.04); z-index: 500; }
 
 .wall-canvas {
   display: block;
@@ -1549,8 +1552,6 @@ a:hover { color: var(--link-hover); border-bottom-color: currentColor; }
 }
 
 .wall-card-date { color: var(--dim); flex-shrink: 0; }
-
-.wall-more { text-align: center; margin-top: 32px; }
 
 @media (prefers-reduced-motion: reduce) {
   .wall-card, .wall-card:hover { transition: none; }
