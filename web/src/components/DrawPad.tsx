@@ -2,13 +2,17 @@ import { useEffect, useRef, useState, type PointerEvent as RPointerEvent } from 
 import { CANVAS, LIMITS, PAPER_COLORS, PEN_COLORS, type Note, type Stroke } from '@shared'
 import { cn } from '../lib/cn'
 import { paint } from '../lib/draw'
-import { postNote } from '../lib/notesApi'
+import { ApiError, postNote } from '../lib/notesApi'
 
-type Props = { onPosted: (note: Note) => void }
+type Props = {
+  onPosted: (note: Note) => void
+  // fired when the server says this visitor already signed (409)
+  onAlreadySigned?: () => void
+}
 
 const PEN_WIDTH = 3
 
-export function DrawPad({ onPosted }: Props) {
+export function DrawPad({ onPosted, onAlreadySigned }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const strokesRef = useRef<Stroke[]>([])
   const currentRef = useRef<Stroke | null>(null)
@@ -104,6 +108,10 @@ export function DrawPad({ onPosted }: Props) {
       setAuthor('')
       onPosted(note)
     } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        onAlreadySigned?.()
+        return
+      }
       setError(err instanceof Error ? err.message : 'could not post')
     } finally {
       setBusy(false)

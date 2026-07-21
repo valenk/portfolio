@@ -1,14 +1,34 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, PointerEvent as RPointerEvent } from 'react'
 import type { Note } from '@shared'
-import { fetchAllNotes } from '../lib/notesApi'
+import { fetchAllNotes, fetchHasPosted } from '../lib/notesApi'
 import { boardHeight, scatter, CARD_W, type Pos } from '../lib/wallLayout'
 import { DrawPad } from '../components/DrawPad'
 import { NoteCard } from '../components/NoteCard'
 
+const SIGNED_KEY = 'wall-signed'
+
+// remember locally that you signed so the pad stays hidden on the next visit,
+// even before the api answers. wrapped because storage can throw in private mode.
+function readSigned(): boolean {
+  try {
+    return localStorage.getItem(SIGNED_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+function rememberSigned() {
+  try {
+    localStorage.setItem(SIGNED_KEY, '1')
+  } catch {
+    /* ignore */
+  }
+}
+
 export function WallPage() {
   const [notes, setNotes] = useState<Note[]>([])
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
+  const [signed, setSigned] = useState<boolean>(readSigned)
 
   const boardRef = useRef<HTMLDivElement>(null)
   const [boardWidth, setBoardWidth] = useState(0)
@@ -35,6 +55,23 @@ export function WallPage() {
       alive = false
     }
   }, [])
+
+  // confirm with the server whether this ip already signed, so the pad hides
+  // even on a fresh browser with no local flag
+  useEffect(() => {
+    let alive = true
+    fetchHasPosted().then((posted) => {
+      if (alive && posted) setSigned(true)
+    })
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  function markSigned() {
+    setSigned(true)
+    rememberSigned()
+  }
 
   // track the board width so the scatter can spread across it and reflow on resize
   useEffect(() => {
@@ -84,7 +121,20 @@ export function WallPage() {
         </p>
       </header>
 
-      <DrawPad onPosted={(note) => setNotes((prev) => [...prev, note])} />
+      {signed ? (
+        <p className="wall-signed">
+          you've signed the wall, thanks for stopping by. drag the notes around
+          and find yours.
+        </p>
+      ) : (
+        <DrawPad
+          onPosted={(note) => {
+            setNotes((prev) => [...prev, note])
+            markSigned()
+          }}
+          onAlreadySigned={markSigned}
+        />
+      )}
 
       {status === 'loading' && <p className="muted wall-note">loading the wall...</p>}
       {status === 'error' && <p className="muted wall-note">the wall is napping, try again later.</p>}

@@ -3,6 +3,16 @@ import type { Note, NoteInput } from '@shared'
 const BASE = '/api'
 const PAGE = 60 // matches the api's default page size
 
+// carries the http status so callers can tell "already signed" (409) apart
+// from a real failure.
+export class ApiError extends Error {
+  status: number
+  constructor(status: number, message: string) {
+    super(message)
+    this.status = status
+  }
+}
+
 export async function fetchNotes(before?: string): Promise<Note[]> {
   const url = new URL(`${BASE}/notes`, window.location.origin)
   if (before) url.searchParams.set('before', before)
@@ -45,6 +55,6 @@ export async function postNote(input: NoteInput): Promise<Note> {
     body: JSON.stringify(input),
   })
   const data = (await res.json().catch(() => ({}))) as { note?: Note; error?: string }
-  if (!res.ok || !data.note) throw new Error(data.error || 'could not post note')
+  if (!res.ok || !data.note) throw new ApiError(res.status, data.error || 'could not post note')
   return data.note
 }

@@ -1511,6 +1511,17 @@ a:hover { color: var(--link-hover); border-bottom-color: currentColor; }
 
 .wall-note { margin: 24px 0; }
 
+.wall-signed {
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--link);
+  padding: 14px 16px;
+  margin-bottom: 44px;
+}
+
 /* the board is a relative canvas the post-its are absolutely scattered on. its
    height comes from js so it always grows to fit every note. */
 .wall-board {
