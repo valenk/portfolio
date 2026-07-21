@@ -1525,9 +1525,20 @@ a:hover { color: var(--link-hover); border-bottom-color: currentColor; }
   margin: 0;
   transform: rotate(var(--tilt, 0deg));
   transition: transform 0.18s ease;
+  cursor: grab;
+  touch-action: none; /* so dragging a note doesn't scroll the page under it */
+  user-select: none;
 }
 
 .wall-card:hover { transform: rotate(0deg) scale(1.04); z-index: 500; }
+
+/* while held, follow the pointer with no lag and no tilt */
+.wall-card--dragging,
+.wall-card--dragging:hover {
+  cursor: grabbing;
+  transition: none;
+  transform: rotate(0deg) scale(1.05);
+}
 
 .wall-canvas {
   display: block;

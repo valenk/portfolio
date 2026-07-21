@@ -1,13 +1,23 @@
-import { useEffect, useRef, type CSSProperties } from 'react'
+import {
+  useEffect,
+  useRef,
+  type CSSProperties,
+  type PointerEvent as RPointerEvent,
+} from 'react'
 import { CANVAS, type Note } from '@shared'
+import { cn } from '../lib/cn'
 import { paint } from '../lib/draw'
 
 type Props = {
   note: Note
   style?: CSSProperties
+  dragging?: boolean
+  onPointerDown?: (e: RPointerEvent<HTMLElement>) => void
+  onPointerMove?: (e: RPointerEvent<HTMLElement>) => void
+  onPointerUp?: (e: RPointerEvent<HTMLElement>) => void
 }
 
-export function NoteCard({ note, style }: Props) {
+export function NoteCard({ note, style, dragging, onPointerDown, onPointerMove, onPointerUp }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -25,7 +35,14 @@ export function NoteCard({ note, style }: Props) {
   const merged = { '--tilt': `${tiltFor(note.id)}deg`, ...style } as CSSProperties
 
   return (
-    <figure className="wall-card" style={merged}>
+    <figure
+      className={cn('wall-card', dragging && 'wall-card--dragging')}
+      style={merged}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+    >
       <canvas
         ref={canvasRef}
         className="wall-canvas"
